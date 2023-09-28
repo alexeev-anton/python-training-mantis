@@ -1,38 +1,31 @@
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-
 from fixture.session import SessionHelper
+from fixture.project_helper import ProjectHelper
+from fixture.james import JamesHelper
+from fixture.signup import SignupHelper
+from fixture.mail import MailHelper
+from fixture.soap import SoapHelper
 
 
 class Application:
-    def __init__(self, browser, base_url):
-        if browser == "chrome":
+    def __init__(self, browser, config):
+        if browser == "firefox":
+            self.wd = webdriver.Firefox()
+        elif browser == "chrome":
             self.wd = webdriver.Chrome()
-        elif browser == "firefox":
-            options = Options()
-            options.binary_location = r'C:\Program Files\Mozilla Firefox\firefox.exe'
-            self.wd = webdriver.Firefox(options=options)
         elif browser == "edge":
             self.wd = webdriver.Edge()
         else:
-            raise ValueError("Unrecognized browser")
-        # self.wd.implicitly_wait(5)
+            raise ValueError("Unknown browser %s" % browser)
+        self.wd.implicitly_wait(2)
         self.session = SessionHelper(self)
-        self.base_url = base_url
-
-    def open_home_page(self):
-        wd = self.wd
-        wd.get(self.base_url)
-
-    def return_to_homepage(self):
-        wd = self.wd
-        if (len(wd.find_elements(By.XPATH, "//strong[normalize-space()='Select all']")) == 0 and
-                len(wd.find_elements(By.XPATH, "//select[@name='to_group']")) == 0):
-            wd.find_element(By.XPATH, "//a[normalize-space()='home']").click()
-
-    def destroy(self):
-        wd = self.wd
-        wd.quit()
+        self.project = ProjectHelper(self)
+        self.james = JamesHelper(self)
+        self.signup = SignupHelper(self)
+        self.mail = MailHelper(self)
+        self.soap = SoapHelper(self)
+        self.config = config
+        self.base_url = config["web"]["base_url"]
 
     def is_valid(self):
         try:
@@ -40,3 +33,10 @@ class Application:
             return True
         except:
             return False
+
+    def open_home_page(self):
+        wd = self.wd
+        wd.get(self.base_url)
+
+    def destroy(self):
+        self.wd.quit()
